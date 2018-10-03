@@ -24,12 +24,11 @@ contract SigFried is Ownable, Destructible, EthPriceDependent {
     // Investor Rewarding array
     uint8[][] public Rewards = [
     [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 10, 10, 5, 5, 5, 5, 5],
-    [0, 10, 10, 6, 6, 6, 6, 6],
-    [0, 10, 10, 7, 7, 7, 7, 7],
-    [0, 10, 10, 8, 8, 8, 8, 8],
-    [0, 10, 10, 9, 9, 9, 9, 9],
-    [0, 10, 10, 10, 10, 10, 10, 10]
+    [0, 10, 1, 1, 1, 1, 1, 1],
+    [0, 10, 2, 2, 2, 2, 2, 2],
+    [0, 10, 3, 3, 3, 3, 3, 3],
+    [0, 10, 4, 4, 4, 4, 4, 4],
+    [0, 10, 5, 5, 5, 5, 5, 5]
     ];
 
     // Investors struct
@@ -169,9 +168,7 @@ contract SigFried is Ownable, Destructible, EthPriceDependent {
         uint current_invested_by_invited_eur = investors[_investorAddr].invested_by_invited_eur;
         uint8 current_level = investors[_investorAddr].level;
 
-        if ( (current_invested_eur >= 1400 ) && (current_invested_by_invited_eur >= 10000 ) ) {
-            investors[_investorAddr].level = 6;
-        } else if ( (current_invested_eur >= 1100 ) && (current_invested_by_invited_eur >= 5000 ) ) {
+        if ( (current_invested_eur >= 1100 ) && (current_invested_by_invited_eur >= 5000 ) ) {
             investors[_investorAddr].level = 5;
         } else if ( (current_invested_eur >= 1000 ) && (current_invested_by_invited_eur >= 2500 ) ) {
             investors[_investorAddr].level = 4;
