@@ -11,17 +11,15 @@ contract SigFriedToken is ERC20, EthPriceDependent {
 
     uint256 public constant INITIAL_SUPPLY = 24 * (10 ** uint256(decimals));
 
-    event FundTransfer(address saver, uint amount);
-    event TokensBought(address saver, uint tokens);
+    event TokensBought(address saver, uint tokens, uint amountInETH);
+    event TokensSell(address saver, uint tokens, uint amountInETH);
 
     constructor() public {
         _mint(msg.sender, INITIAL_SUPPLY);
     }
 
 
-    function buyTokens() public payable {
-        internalBuy(msg.sender, msg.value);
-    }
+
 
     function internalBuy(address client, uint payment) internal {
         require( !priceExpired() );
@@ -35,13 +33,27 @@ contract SigFriedToken is ERC20, EthPriceDependent {
         // send bought tokens to the client
         _transfer(owner(), client, tokens);
 
-        emit FundTransfer(client, payment);
-        emit TokensBought(client, tokens);
+        emit TokensBought(client, tokens, payment);
     }
 
+    function internalSell(address _client, uint _tokens) internal {
+        require( !priceExpired() );
+        require(_tokens.mul(1000).mul(c_tokenPayOutPriceInCentsDecimals) >= c_MinPayOutInCents);
+
+        uint amountInETH = tokens2ether(_tokens);
+        _transfer(_client, owner(), _tokens);
+
+        _client.transfer(amountInETH);
+
+        emit TokensSell(_client, _tokens, amountInETH);
+    }
 
     function setTokenPriceInCents(uint _price) external onlyOwner {
         c_tokenPriceInCents = _price;
+    }
+
+    function setTokenPayOutPriceInCentsDecimals(uint _price) external onlyOwner {
+        c_tokenPayOutPriceInCentsDecimals = _price;
     }
 
     function ether2tokens(uint ether_) public view returns (uint) {
@@ -49,16 +61,20 @@ contract SigFriedToken is ERC20, EthPriceDependent {
     }
 
     function tokens2ether(uint tokens) public view returns (uint) {
-        return tokens.mul(100).mul(c_tokenPriceInCents).div(m_ETHPriceInCents);
+        return tokens.mul(1000).mul(c_tokenPayOutPriceInCentsDecimals).div(m_ETHPriceInCents);
     }
-
-
 
     /// @notice minimum investment in cents
     uint public constant c_MinInvestmentInCents = 500; // EUR5
 
+    /// @notice minimum payOut in cents
+    uint public constant c_MinPayOutInCents = 1000; // EUR10
+
     /// @notice token price in cents
     uint public c_tokenPriceInCents = 1; // EUR0.01
+
+    /// @notice token price in cents decimals
+    uint public c_tokenPayOutPriceInCentsDecimals = 10; // EUR0.01
 
     /// @notice current amount of tokens sold
     uint public m_currentTokensSold;

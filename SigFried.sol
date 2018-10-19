@@ -1,13 +1,14 @@
 pragma solidity ^0.4.24;
 
 import "./EthPriceDependent.sol";
+import "./SigFriedToken.sol";
 import "./ownership/Ownable.sol";
 import "./lifecycle/Destructible.sol";
 import "./math/SafeMath.sol";
 import "./math/Math.sol";
 
 
-contract SigFried is Ownable, Destructible, EthPriceDependent {
+contract SigFried is Ownable, Destructible, EthPriceDependent, SigFriedToken {
     using SafeMath for uint256;
 
     // Contract Events
@@ -240,21 +241,17 @@ contract SigFried is Ownable, Destructible, EthPriceDependent {
     }
 
 
-    // TESTING methods !!!REMOVE IN PRODUCTION!!!
-    function test_invested_eur(address _addr) public view returns(uint) {
-        return investors[_addr].invested_eur;
+
+
+    // SAVER PART
+
+    function buyTokens() public payable {
+        internalBuy(msg.sender, msg.value);
     }
-    function test_invested_by_invited_eur(address _addr) public view returns(uint) {
-        return investors[_addr].invested_by_invited_eur;
+
+    function sellTokens(uint _tokens) public {
+        internalSell(msg.sender, _tokens);
     }
-    function test_referral_reward_eur(address _addr) public view returns(uint) {
-        return investors[_addr].referral_reward_eur;
-    }
-    function test_referral_reward_eth(address _addr) public view returns(uint) {
-        return investors[_addr].referral_reward_eth;
-    }
-    function test_level(address _addr) public view returns(uint) {
-        return investors[_addr].level;
-    }
+
 
 }
