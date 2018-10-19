@@ -12,7 +12,7 @@ contract EthPriceDependent is Ownable, usingOraclize {
     event NewETHPrice(uint price);
     event ETHPriceOutOfBounds(uint price);
 
-    constructor() public onlyOwner {
+    constructor() public {
         oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
         oraclize_setCustomGasPrice(40000000);
         updateETHPriceInCents();
@@ -28,9 +28,9 @@ contract EthPriceDependent is Ownable, usingOraclize {
         // however don't throw any error, because it's called from __callback as well
         // and we need to let it update the price anyway, otherwise there is an attack possibility
         if ( !updateRequestExpired() ) {
-            NewOraclizeQuery("Oraclize request fail. Previous one still pending");
-        } else if (oraclize_getPrice("URL") > this.balance) {
-            NewOraclizeQuery("Oraclize request fail. Not enough ether");
+            emit NewOraclizeQuery("Oraclize request fail. Previous one still pending");
+        } else if (oraclize_getPrice("URL") > address(this).balance) {
+            emit NewOraclizeQuery("Oraclize request fail. Not enough ether");
         } else {
             oraclize_query(
                 m_ETHPriceUpdateInterval,
@@ -39,7 +39,7 @@ contract EthPriceDependent is Ownable, usingOraclize {
                 m_callbackGas
             );
             m_ETHPriceLastUpdateRequest = getTime();
-            NewOraclizeQuery("Oraclize query was sent");
+            emit NewOraclizeQuery("Oraclize query was sent");
         }
     }
 
@@ -52,9 +52,9 @@ contract EthPriceDependent is Ownable, usingOraclize {
         if (newPrice >= m_ETHPriceLowerBound && newPrice <= m_ETHPriceUpperBound) {
             m_ETHPriceInCents = newPrice;
             m_ETHPriceLastUpdate = getTime();
-            NewETHPrice(m_ETHPriceInCents);
+            emit NewETHPrice(m_ETHPriceInCents);
         } else {
-            ETHPriceOutOfBounds(newPrice);
+            emit ETHPriceOutOfBounds(newPrice);
         }
         // continue updating anyway (if current price was out of bounds, the price might recover in the next cycle)
         updateETHPriceInCents();
@@ -81,7 +81,7 @@ contract EthPriceDependent is Ownable, usingOraclize {
         require( priceExpired() || updateRequestExpired() );
         m_ETHPriceInCents = _price;
         m_ETHPriceLastUpdate = getTime();
-        NewETHPrice(m_ETHPriceInCents);
+        emit NewETHPrice(m_ETHPriceInCents);
     }
 
     /// @notice add more ether to use in oraclize queries
