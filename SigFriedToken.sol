@@ -27,7 +27,7 @@ contract SigFriedToken is ERC20, EthPriceDependent {
 
         uint tokens = ether2tokens(payment);
 
-        // change ICO investment stats
+        // change investment stats
         m_currentTokensSold = m_currentTokensSold.add(tokens);
 
         // send bought tokens to the client
@@ -39,6 +39,9 @@ contract SigFriedToken is ERC20, EthPriceDependent {
     function internalSell(address _client, uint _tokens) internal {
         require( !priceExpired() );
         require(_tokens.mul(1000).mul(c_tokenPayOutPriceInCentsDecimals) >= c_MinPayOutInCents);
+
+        // change investment stats
+        m_currentTokensSold = m_currentTokensSold.sub(_tokens);
 
         uint amountInETH = tokens2ether(_tokens);
         _transfer(_client, owner(), _tokens);
