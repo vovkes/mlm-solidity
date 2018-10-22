@@ -45,6 +45,8 @@ contract SigFried is Ownable, Destructible, EthPriceDependent, SigFriedToken {
         bool silver_bought; // Is investor bought Silver Pack
         bool gold_bought; // Is investor bought Gold Pack
         bool platinum_bought; // Is investor bought Platinum Pack
+        // Saver PART
+        uint saver_block_lock;
     }
 
     // Investors
@@ -240,9 +242,6 @@ contract SigFried is Ownable, Destructible, EthPriceDependent, SigFriedToken {
         return investors[msg.sender].invested_by_invited_eur;
     }
 
-
-
-
     // SAVER PART
 
     function buyTokens() public payable {
@@ -253,5 +252,46 @@ contract SigFried is Ownable, Destructible, EthPriceDependent, SigFriedToken {
         internalSell(msg.sender, _tokens);
     }
 
+    function internalBuy(address _investor, uint _payment) internal {
+        require( !priceExpired() );
+        require((_payment.mul(m_ETHPriceInCents)).div(1 ether) >= c_MinInvestmentInCents);
+
+        if (balanceOf(_investor) != 0) {
+            uint256 depositTokenPercents = balanceOf(_investor).mul(c_tokenDayPercentThousands).div(1000).div(100).mul(block.number-investors[_investor].saver_block_lock).div(5900);
+            // send  percents to the investor
+            _transfer(owner(), _investor, depositTokenPercents);
+            
+            emit TokensPercents(_investor, depositTokenPercents);
+        }
+
+        uint tokens = ether2tokens(_payment);
+
+        // change investment stats
+        m_currentTokensSold = m_currentTokensSold.add(tokens);
+
+        // send bought tokens to the investor
+        _transfer(owner(), _investor, tokens);
+
+        // save block lock
+        investors[_investor].saver_block_lock = block.number;
+
+        emit TokensBought(_investor, tokens, _payment);
+    }
+
+    function internalSell(address _investor, uint _tokens) internal {
+        require( !priceExpired() );
+        require(_tokens.div(10).mul(c_tokenPayOutPriceInCentsDecimals) >= c_MinPayOutInCents);
+        require( balanceOf(_investor) >= _tokens);
+
+        // change investment stats
+        m_currentTokensSold = m_currentTokensSold.sub(_tokens);
+
+        uint amountInETH = tokens2ether(_tokens);
+        _transfer(_investor, owner(), _tokens);
+
+        _investor.transfer(amountInETH);
+
+        emit TokensSell(_investor, _tokens, amountInETH);
+    }
 
 }
