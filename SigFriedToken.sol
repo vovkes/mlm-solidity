@@ -11,9 +11,12 @@ contract SigFriedToken is ERC20, EthPriceDependent {
 
     uint256 public constant INITIAL_SUPPLY = 24 * (10 ** uint256(decimals));
 
-    event TokensBought(address saver, uint tokens, uint amountInETH);
-    event TokensPercents(address saver, uint tokens);
-    event TokensSell(address saver, uint tokens, uint amountInETH);
+    event TokensBuy(address investorAddr, uint amountTokens, uint amountInETH);
+    event TokensSell(address investorAddr, uint amountTokens, uint amountInETH);
+
+    event TokensPercentsPayOut(address investorAddr, uint amountTokens, uint amountInETH);
+    event TokensPercentsReinvest(address investorAddr, uint amountTokens);
+
 
     constructor() public {
         _mint(msg.sender, INITIAL_SUPPLY);
@@ -29,6 +32,10 @@ contract SigFriedToken is ERC20, EthPriceDependent {
 
     function setTokenPayOutPriceInCentsDecimals(uint _price) external onlyOwner {
         c_tokenPayOutPriceInCentsDecimals = _price;
+    }
+
+    function setTokenOneTimeReferralReward (uint _percent) external onlyOwner {
+        c_tokenOneTimeReferralReward = _percent;
     }
 
     function ether2tokens(uint ether_) public view returns (uint) {
@@ -56,4 +63,8 @@ contract SigFriedToken is ERC20, EthPriceDependent {
 
     /// @notice current amount of tokens sold
     uint public m_currentTokensSold;
+
+    /// @notice token one time referral reward in percents
+    uint public c_tokenOneTimeReferralReward = 5; // 5%
+
 }

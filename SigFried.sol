@@ -47,6 +47,7 @@ contract SigFried is Ownable, Destructible, EthPriceDependent, SigFriedToken {
         bool platinum_bought; // Is investor bought Platinum Pack
         // Saver PART
         uint saver_block_lock;
+        uint saver_token_percents;
     }
 
     // Investors
@@ -256,15 +257,14 @@ contract SigFried is Ownable, Destructible, EthPriceDependent, SigFriedToken {
         require( !priceExpired() );
         require((_payment.mul(m_ETHPriceInCents)).div(1 ether) >= c_MinInvestmentInCents);
 
-        if (balanceOf(_investor) != 0) {
-            uint256 depositTokenPercents = balanceOf(_investor).mul(c_tokenDayPercentThousands).div(1000).div(100).mul(block.number-investors[_investor].saver_block_lock).div(5900);
-            // send  percents to the investor
-            _transfer(owner(), _investor, depositTokenPercents);
-            
-            emit TokensPercents(_investor, depositTokenPercents);
-        }
-
         uint tokens = ether2tokens(_payment);
+
+        // Add one time referral reward to inviter
+        if (investors[_investor].inviter != address(0)) {
+            address inviter = investors[_investor].inviter;
+            uint256 referralTokenPercents = tokens.mul(c_tokenOneTimeReferralReward).div(100);
+            investors[inviter].saver_token_percents = investors[inviter].saver_token_percents.add(referralTokenPercents);
+        }
 
         // change investment stats
         m_currentTokensSold = m_currentTokensSold.add(tokens);
@@ -272,10 +272,7 @@ contract SigFried is Ownable, Destructible, EthPriceDependent, SigFriedToken {
         // send bought tokens to the investor
         _transfer(owner(), _investor, tokens);
 
-        // save block lock
-        investors[_investor].saver_block_lock = block.number;
-
-        emit TokensBought(_investor, tokens, _payment);
+        emit TokensBuy(_investor, tokens, _payment);
     }
 
     function internalSell(address _investor, uint _tokens) internal {
@@ -292,6 +289,41 @@ contract SigFried is Ownable, Destructible, EthPriceDependent, SigFriedToken {
         _investor.transfer(amountInETH);
 
         emit TokensSell(_investor, _tokens, amountInETH);
+    }
+
+    function getCurrentTokenPercents() public view returns(uint) {
+        require(investors[msg.sender].is_exists == true);
+
+        return balanceOf(msg.sender).mul(c_tokenDayPercentThousands).div(1000).div(100).mul(block.number-investors[msg.sender].saver_block_lock).div(5900);
+    }
+
+    function payOutCurrentTokenPercents() public {
+        uint depositTokenPercents = getCurrentTokenPercents();
+
+        require(depositTokenPercents > 0);
+
+        uint amountInETH = tokens2ether(depositTokenPercents);
+        msg.sender.transfer(amountInETH);
+
+        // save block lock
+        investors[msg.sender].saver_block_lock = block.number;
+
+        emit TokensPercentsPayOut(msg.sender,  depositTokenPercents, amountInETH);
+
+    }
+
+    function reinvestCurrentTokenPercents() public {
+        uint depositTokenPercents = getCurrentTokenPercents();
+
+        require(depositTokenPercents > 0);
+
+        // send percent tokens to the investor
+        _transfer(owner(), msg.sender, depositTokenPercents);
+
+        // save block lock
+        investors[msg.sender].saver_block_lock = block.number;
+
+        emit TokensPercentsReinvest(msg.sender, depositTokenPercents);
     }
 
 }
