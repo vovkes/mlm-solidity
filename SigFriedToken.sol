@@ -17,6 +17,8 @@ contract SigFriedToken is ERC20, EthPriceDependent {
     event TokensPercentsPayOut(address investorAddr, uint amountTokens, uint amountInETH);
     event TokensPercentsReinvest(address investorAddr, uint amountTokens);
 
+    event TokensReferralReward(address investorAddr, uint amountTokens);
+
 
     constructor() public {
         _mint(msg.sender, INITIAL_SUPPLY);
