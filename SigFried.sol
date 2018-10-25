@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 
-import "./EthPriceDependent.sol";
+//import "./EthPriceDependent.sol";
+import "./EthPriceDependentTest.sol";
 import "./SigFriedToken.sol";
 import "./ownership/Ownable.sol";
 import "./lifecycle/Destructible.sol";
@@ -8,7 +9,7 @@ import "./math/SafeMath.sol";
 import "./math/Math.sol";
 
 
-contract SigFried is Ownable, Destructible, EthPriceDependent, SigFriedToken {
+contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken {
     using SafeMath for uint256;
 
     // Contract Events
@@ -18,6 +19,13 @@ contract SigFried is Ownable, Destructible, EthPriceDependent, SigFriedToken {
     event InvestorPackBought(address investorAddr, string packName, uint amountEUR);
     event InvestorRewardUpd(address investorAddr, uint8 iteration, uint amountEUR, uint amountETH);
 
+    event TokensBuy(address investorAddr, uint amountTokens, uint amountInETH);
+    event TokensSell(address investorAddr, uint amountTokens, uint amountInETH);
+
+    event TokensPercentsPayOut(address investorAddr, uint amountTokens, uint amountInETH);
+    event TokensPercentsReinvest(address investorAddr, uint amountTokens);
+
+    event TokensReferralReward(address investorAddr, uint amountTokens);
 
     // Available Packs and prices for Investors
     mapping (bytes16 => uint32) public PackPrices;
@@ -54,8 +62,8 @@ contract SigFried is Ownable, Destructible, EthPriceDependent, SigFriedToken {
     mapping (address => Investor) private investors;
 
     // Constructor
-    constructor(uint32 _silverPackPrice, uint32 _goldPackPrice, uint32 _platinumPackPrice) public payable {
-        setPacksPrices(_silverPackPrice, _goldPackPrice, _platinumPackPrice);
+    constructor() public payable {
+        setPacksPrices(100, 300, 1000);
     }
 
     // Set Pack Prices in EUR
@@ -254,10 +262,12 @@ contract SigFried is Ownable, Destructible, EthPriceDependent, SigFriedToken {
     }
 
     function internalBuy(address _investor, uint _payment) internal {
+        require(investors[_investor].is_exists == true);
         require( !priceExpired() );
         require((_payment.mul(m_ETHPriceInCents)).div(1 ether) >= c_MinInvestmentInCents);
 
         uint tokens = ether2tokens(_payment);
+
 
         // Add one time referral reward to inviter
         if (investors[_investor].inviter != address(0)) {
@@ -277,8 +287,9 @@ contract SigFried is Ownable, Destructible, EthPriceDependent, SigFriedToken {
     }
 
     function internalSell(address _investor, uint _tokens) internal {
+        require(investors[_investor].is_exists == true);
         require( !priceExpired() );
-        require(_tokens.div(10).mul(c_tokenPayOutPriceInCentsDecimals) >= c_MinPayOutInCents);
+        require(_tokens.mul(c_tokenPayOutPriceInCentsDecimals).div(10) >= c_MinPayOutInCents);
         require( balanceOf(_investor) >= _tokens);
 
         // change investment stats
