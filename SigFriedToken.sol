@@ -21,44 +21,24 @@ contract SigFriedToken is ERC20, Ownable, EthPriceDependentTest {
         c_tokenPriceInCents = _price;
     }
 
-    function getTokenPriceInCents() public view returns (uint) {
-        return c_tokenPriceInCents;
-    }
-
     function setTokenDayPercentThousands(uint _percentThousands) external onlyOwner {
         c_tokenDayPercentThousands = _percentThousands;
-    }
-
-    function getTokenDayPercentThousands() public view returns (uint) {
-        return c_tokenDayPercentThousands;
     }
 
     function setTokenPayOutPriceInCentsDecimals(uint _price) external onlyOwner {
         c_tokenPayOutPriceInCentsDecimals = _price;
     }
 
-    function getTokenPayOutPriceInCentsDecimals() public view returns (uint) {
-        return c_tokenPayOutPriceInCentsDecimals;
-    }
-
     function setTokenOneTimeReferralReward (uint _percent) external onlyOwner {
         c_tokenOneTimeReferralReward = _percent;
     }
 
-    function getTokenOneTimeReferralReward() public view returns (uint) {
-        return c_tokenOneTimeReferralReward;
+    function ether2tokens(uint _ether) public view returns (uint) {
+        return _ether.mul(m_ETHPriceInCents).div(1 ether).div(c_tokenPriceInCents);
     }
 
-    function ether2tokens(uint ether_) public view returns (uint) {
-        return ether_.mul(m_ETHPriceInCents).div(1 ether).div(c_tokenPriceInCents);
-    }
-
-    function tokens2ether(uint tokens) public view returns (uint) {
-        return tokens.mul(c_tokenPayOutPriceInCentsDecimals).div(10).div(m_ETHPriceInCents).mul(1 ether);
-    }
-
-    function getCurrentTokensSold() public view returns (uint) {
-        return m_currentTokensSold;
+    function tokens2ether(uint _tokens) public view returns (uint) {
+        return _tokens.mul(c_tokenPayOutPriceInCentsDecimals).div(10).mul(1 ether).div(m_ETHPriceInCents);
     }
 
     /// @notice minimum investment in cents

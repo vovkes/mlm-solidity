@@ -262,12 +262,17 @@ contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken
     }
 
     function internalBuy(address _investor, uint _payment) internal {
+        require(_investor != owner());
         require(investors[_investor].is_exists == true);
-        require( !priceExpired() );
+        require(!priceExpired());
         require((_payment.mul(m_ETHPriceInCents)).div(1 ether) >= c_MinInvestmentInCents);
 
-        uint tokens = ether2tokens(_payment);
+        // Reinvest token percents
+        if (getCurrentTokenPercentsAndReferral() > 0) {
+            reinvestCurrentTokenPercents();
+        }
 
+        uint tokens = ether2tokens(_payment);
 
         // Add one time referral reward to inviter
         if (investors[_investor].inviter != address(0)) {
@@ -287,10 +292,16 @@ contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken
     }
 
     function internalSell(address _investor, uint _tokens) internal {
+        require(_investor != owner());
         require(investors[_investor].is_exists == true);
-        require( !priceExpired() );
+        require(!priceExpired());
         require(_tokens.mul(c_tokenPayOutPriceInCentsDecimals).div(10) >= c_MinPayOutInCents);
-        require( balanceOf(_investor) >= _tokens);
+        require(balanceOf(_investor) >= _tokens);
+
+        // Reinvest token percents
+        if (getCurrentTokenPercentsAndReferral() > 0) {
+            reinvestCurrentTokenPercents();
+        }
 
         // change investment stats
         m_currentTokensSold = m_currentTokensSold.sub(_tokens);
@@ -306,13 +317,22 @@ contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken
     function getCurrentTokenPercentsAndReferral() public view returns(uint) {
         require(investors[msg.sender].is_exists == true);
 
+        uint current_token_percents;
+
         uint saver_referral_reward_tokens = investors[msg.sender].saver_referral_reward_tokens;
-        uint current_token_percents = balanceOf(msg.sender).mul(c_tokenDayPercentThousands).div(1000).div(100).mul(block.number-investors[msg.sender].saver_block_lock).div(5900);
+
+        if (investors[msg.sender].saver_block_lock > 0) {
+            current_token_percents = balanceOf(msg.sender).mul(c_tokenDayPercentThousands).div(1000).div(100).mul(block.number-investors[msg.sender].saver_block_lock).div(5900);
+        } else {
+            current_token_percents = 0;
+        }
 
         return saver_referral_reward_tokens.add(current_token_percents);
     }
 
     function payOutCurrentTokenPercents() public {
+        require(msg.sender != owner());
+
         uint depositTokenPercents = getCurrentTokenPercentsAndReferral();
 
         require(depositTokenPercents > 0);
@@ -331,6 +351,8 @@ contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken
     }
 
     function reinvestCurrentTokenPercents() public {
+        require(msg.sender != owner());
+
         uint depositTokenPercents = getCurrentTokenPercentsAndReferral();
 
         require(depositTokenPercents > 0);
@@ -346,5 +368,4 @@ contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken
 
         emit TokensPercentsReinvest(msg.sender, depositTokenPercents);
     }
-
 }
