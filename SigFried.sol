@@ -25,7 +25,7 @@ contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken
     event TokensPercentsPayOut(address investorAddr, uint amountTokens, uint amountInETH);
     event TokensPercentsReinvest(address investorAddr, uint amountTokens);
 
-    event TokensReferralReward(address investorAddr, uint amountTokens);
+    event TokensReferralReward(address investorAddr, address fromInvestorAddr, uint amountTokens);
 
     // Available Packs and prices for Investors
     mapping (bytes16 => uint32) public PackPrices;
@@ -114,7 +114,7 @@ contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken
         // Recount Level of current investor
         recountInvestorLevel(msg.sender);
 
-        updateParentInvestor(investors[msg.sender].inviter, PackPrices['Silver'], 1);
+        updateParentInvestor(investors[msg.sender].inviter, msg.sender, PackPrices['Silver'], 1);
     }
 
     function buyGoldPack() public payable {
@@ -129,7 +129,7 @@ contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken
         // Recount Level of current investor
         recountInvestorLevel(msg.sender);
 
-        updateParentInvestor(investors[msg.sender].inviter, PackPrices['Gold'], 1);
+        updateParentInvestor(investors[msg.sender].inviter, msg.sender, PackPrices['Gold'], 1);
     }
 
     function buyPlatinumPack() public payable {
@@ -144,10 +144,10 @@ contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken
         // Recount Level of current investor
         recountInvestorLevel(msg.sender);
 
-        updateParentInvestor(investors[msg.sender].inviter, PackPrices['Platinum'], 1);
+        updateParentInvestor(investors[msg.sender].inviter, msg.sender, PackPrices['Platinum'], 1);
     }
 
-    function updateParentInvestor(address _investorAddr, uint32 _investmentAmountEUR, uint8 _iteration) private {
+    function updateParentInvestor(address _investorAddr, address _fromInvestorAddr, uint32 _investmentAmountEUR, uint8 _iteration) private {
         if (_investorAddr != address(0)) {
 
             if (_iteration == 1) {
@@ -168,7 +168,7 @@ contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken
 
             _iteration += 1;
             if (_iteration < 8) {
-                updateParentInvestor(investors[_investorAddr].inviter, _investmentAmountEUR, _iteration);
+                updateParentInvestor(investors[_investorAddr].inviter, _fromInvestorAddr, _investmentAmountEUR, _iteration);
             }
         }
 
@@ -274,14 +274,6 @@ contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken
 
         uint tokens = ether2tokens(_payment);
 
-        // Add one time referral reward to inviter
-        if (investors[_investor].inviter != address(0)) {
-            address inviter = investors[_investor].inviter;
-            uint256 referralTokensReward = tokens.mul(c_tokenOneTimeReferralReward).div(100);
-            investors[inviter].saver_referral_reward_tokens = investors[inviter].saver_referral_reward_tokens.add(referralTokensReward);
-            emit TokensReferralReward(inviter, referralTokensReward);
-        }
-
         // change investment stats
         m_currentTokensSold = m_currentTokensSold.add(tokens);
 
@@ -289,6 +281,14 @@ contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken
         _transfer(owner(), _investor, tokens);
 
         emit TokensBuy(_investor, tokens, _payment);
+
+        // Add one time referral reward to inviter
+        if (investors[_investor].inviter != address(0)) {
+            address inviter = investors[_investor].inviter;
+            uint256 referralTokensReward = tokens.mul(c_tokenOneTimeReferralReward).div(100);
+            investors[inviter].saver_referral_reward_tokens = investors[inviter].saver_referral_reward_tokens.add(referralTokensReward);
+            emit TokensReferralReward(inviter, _investor, referralTokensReward);
+        }
     }
 
     function internalSell(address _investor, uint _tokens) internal {
