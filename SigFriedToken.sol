@@ -9,9 +9,9 @@ contract SigFriedToken is ERC20, Ownable, EthPriceDependentTest {
 
     string public constant name = "SigFriedToken";
     string public constant symbol = "SFT";
-    uint8 public constant decimals = 9;
+    uint8 public constant decimals = 0;
 
-    uint256 public constant INITIAL_SUPPLY = 24 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 24 * (10 ** 9) * (10 ** uint256(decimals));
 
     constructor() public {
         _mint(msg.sender, INITIAL_SUPPLY);
