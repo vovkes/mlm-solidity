@@ -8,7 +8,7 @@ import "./EthPriceDependentTest.sol";
 contract SigFredToken is ERC20, Ownable, EthPriceDependentTest {
 
     string public constant name = "SigFredToken";
-    string public constant symbol = "SFT";
+    string public constant symbol = "SGF";
     uint8 public constant decimals = 0;
 
     uint256 public constant INITIAL_SUPPLY = 24 * (10 ** 9) * (10 ** uint256(decimals));
