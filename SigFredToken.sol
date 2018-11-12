@@ -5,9 +5,9 @@ import "./ERC20/ERC20.sol";
 //import "./EthPriceDependent.sol";
 import "./EthPriceDependentTest.sol";
 
-contract SigFriedToken is ERC20, Ownable, EthPriceDependentTest {
+contract SigFredToken is ERC20, Ownable, EthPriceDependentTest {
 
-    string public constant name = "SigFriedToken";
+    string public constant name = "SigFredToken";
     string public constant symbol = "SFT";
     uint8 public constant decimals = 0;
 

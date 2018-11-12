@@ -2,14 +2,14 @@ pragma solidity ^0.4.24;
 
 //import "./EthPriceDependent.sol";
 import "./EthPriceDependentTest.sol";
-import "./SigFriedToken.sol";
+import "./SigFredToken.sol";
 import "./ownership/Ownable.sol";
 import "./lifecycle/Destructible.sol";
 import "./math/SafeMath.sol";
 import "./math/Math.sol";
 
 
-contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken {
+contract SigFred is Ownable, Destructible, EthPriceDependentTest, SigFredToken {
     using SafeMath for uint256;
 
     // Contract Events
@@ -368,4 +368,10 @@ contract SigFried is Ownable, Destructible, EthPriceDependentTest, SigFriedToken
 
         emit TokensPercentsReinvest(msg.sender, depositTokenPercents);
     }
+
+    function transferOwnership(address newOwner) public onlyOwner {
+        _transfer( owner(), newOwner, balanceOf(owner()) );
+        _transferOwnership(newOwner);
+    }
+
 }

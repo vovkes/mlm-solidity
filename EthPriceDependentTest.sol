@@ -18,7 +18,7 @@ contract EthPriceDependentTest {
         m_ETHPriceInCents = _price;
     }
 
-    function setOraclizeGasPrice(uint _gasPrice) external  {
+    function setOraclizeGasPrice() external  {
 
     }
 
